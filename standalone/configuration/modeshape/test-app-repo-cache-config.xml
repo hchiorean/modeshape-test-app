@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+            xmlns="urn:infinispan:config:7.0">
+    <cache-container default-cache="test-app-repo" statistics="false">
+        <jmx duplicate-domains="true"/>
+        <local-cache name="test-app-repo">
+            <locking striping="false" isolation="READ_COMMITTED"/>
+            <transaction mode="NON_DURABLE_XA" locking="PESSIMISTIC"/>
+            <eviction max-entries="10000" strategy="LIRS"/>
+            <expiration interval="-1"/>
+            <persistence
+                    passivation="false">
+                <file-store fetch-state="false"
+                            shared="false"
+                            preload="false"
+                            purge="false"
+                            path="${jboss.server.data.dir}/modeshape/store/test-app"/>
+            </persistence>
+        </local-cache>
+    </cache-container>
+</infinispan>
