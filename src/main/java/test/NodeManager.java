@@ -1,6 +1,6 @@
 package test;
 
-import org.jboss.logging.Logger;
+import java.util.UUID;
 import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -9,10 +9,10 @@ import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.transaction.NotSupportedException;
+import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
-import java.util.UUID;
-import java.util.stream.IntStream;
+import org.jboss.logging.Logger;
 
 /**
  * @author Richard Lucas
@@ -35,10 +35,7 @@ public class NodeManager {
         try {
             session = repository.login();
             startTransaction();
-            Node level1 = addNode("/", session);
-            String path = level1.getPath();
-            Session s = session;
-            IntStream.range(0, 10).forEach(j -> addNode(path, s));
+            addNode("/", session);
             commitTransaction();
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -49,12 +46,18 @@ public class NodeManager {
                 session = null;
             }
         }
-
+            
         try {
+            int status = userTransaction.getStatus();
+            if (status != Status.STATUS_NO_TRANSACTION) {
+                throw new IllegalStateException("Expected the transaction to have been committed");
+            }
+
             session = repository.login();
             queryNodes(session);
             session.logout();
-        } catch (RepositoryException e) {
+        } catch (Exception e) {
+            LOGGER.error("error", e);
             throw new RuntimeException(e);
         } finally {
             if (session != null) {
@@ -65,22 +68,22 @@ public class NodeManager {
 
     private void startTransaction() {
         try {
+            LOGGER.info("Beginning transaction from client...");
             userTransaction.begin();
-            LOGGER.info("Begin");
         } catch (SystemException | NotSupportedException e) {
             LOGGER.error("Failed to start transaction", e);
         }
     }
 
     private void commitTransaction() throws Exception {
+        LOGGER.info("Committing transaction from client...");
         userTransaction.commit();
-        LOGGER.info("Commit");
     }
 
     private void rollbackTransaction() {
         try {
+            LOGGER.info("Rolling back transaction from client...");
             userTransaction.rollback();
-            LOGGER.info("Rollback");
         } catch (Exception e) {
             LOGGER.error("Failed to rollback transaction", e);
         }
@@ -90,7 +93,7 @@ public class NodeManager {
         try {
             QueryManager queryManager = session.getWorkspace().getQueryManager();
 
-            Query query = queryManager.createQuery("SELECT node.* FROM [mix:title] AS node WHERE ISDESCENDANTNODE('/')", Query.JCR_SQL2);
+            Query query = queryManager.createQuery("SELECT node.* FROM [mix:title] AS node", Query.JCR_SQL2);
             QueryResult result = query.execute();
 
             return "nodes: " + result.getNodes().getSize();

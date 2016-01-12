@@ -18,6 +18,8 @@
 
         <jcr.version>2.0</jcr.version>
         <modeshape.version>4.5.0.Final</modeshape.version>
+        <wf.version>9.0.1.Final</wf.version>
+        <ispn.version>7.2.4.Final</ispn.version>
     </properties>
 
     <dependencyManagement>
@@ -117,6 +119,22 @@
     </dependencies>
 
     <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>*</include>
+                </includes>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
@@ -150,6 +168,68 @@
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.8</version>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.wildfly</groupId>
+                                    <artifactId>wildfly-dist</artifactId>
+                                    <version>${wf.version}</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>target</outputDirectory>
+                                </artifactItem>
+                                <!-- Unpack the ModeShape distribution which is installed (hopefully) locally-->
+                                <artifactItem>
+                                    <groupId>org.modeshape</groupId>
+                                    <artifactId>modeshape-distribution</artifactId>
+                                    <version>${modeshape.version}</version>
+                                    <classifier>jboss-wf9-dist</classifier>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/wildfly-${wf.version}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>overwrite-configuration</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/wildfly-${wf.version}</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>.</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>standalone/**</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

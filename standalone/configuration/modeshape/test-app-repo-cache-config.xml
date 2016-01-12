@@ -7,7 +7,7 @@
         <local-cache name="test-app-repo">
             <locking striping="false" isolation="READ_COMMITTED"/>
             <transaction mode="NON_DURABLE_XA" locking="PESSIMISTIC"/>
-            <eviction max-entries="10000" strategy="LIRS"/>
+            <eviction max-entries="10" strategy="LIRS"/>
             <expiration interval="-1"/>
             <persistence
                     passivation="false">
@@ -16,6 +16,20 @@
                             preload="false"
                             purge="false"
                             path="${jboss.server.data.dir}/modeshape/store/test-app"/>
+                <!--<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.0"-->
+                                         <!--fetch-state="false"-->
+                                         <!--read-only="false"-->
+                                         <!--purge="false">-->
+                    <!--<data-source jndi-url="java:jboss/datasources/ModeshapeJDBCStoreDS"/>-->
+                    <!--<string-keyed-table-->
+                            <!--prefix="ISPN_"-->
+                            <!--create-on-start="true"-->
+                            <!--drop-on-exit="false">-->
+                        <!--<id-column name="ID_COLUMN" type="VARCHAR(200)"/>-->
+                        <!--<data-column name="DATA_COLUMN" type="BYTEA"/>-->
+                        <!--<timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT"/>-->
+                    <!--</string-keyed-table>-->
+                <!--</string-keyed-jdbc-store>-->
             </persistence>
         </local-cache>
     </cache-container>
